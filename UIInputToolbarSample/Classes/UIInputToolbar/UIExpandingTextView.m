@@ -61,6 +61,7 @@
 @synthesize maximumNumberOfLines = _maximumNumberOfLines;
 @synthesize minimumHeight = _minimumHeight;
 @synthesize maximumHeight = _maximumHeight;
+@synthesize maximumTextCount = _maximumTextCount;
 @synthesize forceSizeUpdate = _forceSizeUpdate;
 @synthesize delegate = _delegate;
 
@@ -70,9 +71,9 @@
     {
         self.forceSizeUpdate = NO;
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-		CGRect backgroundFrame = frame;
+        CGRect backgroundFrame = frame;
         backgroundFrame.origin.y = 0;
-		backgroundFrame.origin.x = 0;
+        backgroundFrame.origin.x = 0;
         
         CGRect textViewFrame = CGRectInset(backgroundFrame, kTextInsetX, 0);
         
@@ -109,7 +110,7 @@
         
         /* Internal Text View component */
         
-		self.internalTextView.delegate = self;
+        self.internalTextView.delegate = self;
         self.internalTextView.text = @"-";
         self.internalTextView.opaque = NO;
         self.internalTextView.backgroundColor = [UIColor clearColor];
@@ -129,12 +130,15 @@
 
         /*set default parameters*/
         [self setFont:[UIFont systemFontOfSize:15]];
-		[self setMinimumNumberOfLines:1];
-		[self setMaximumNumberOfLines:5];
+        [self setMinimumNumberOfLines:1];
+        [self setMaximumNumberOfLines:5];
         
         [self clearText];
         
         [self sizeToFit];
+        
+        /** set max text count **/
+        _maximumTextCount = NSIntegerMax;
     }
     return self;
 }
@@ -283,8 +287,8 @@
         self.placeholderLabel.alpha = 0;
     
     CGFloat textHeight = [self measureHeight];
-	CGFloat newHeight = textHeight;
-	
+    CGFloat newHeight = textHeight;
+    
     if(newHeight < self.minimumHeight || ![self hasText]) {
         newHeight = self.minimumHeight;
     }
@@ -293,22 +297,22 @@
         newHeight = self.maximumHeight;
     }
     
-	if (self.internalTextView.frame.size.height != newHeight || self.forceSizeUpdate) {
+    if (self.internalTextView.frame.size.height != newHeight || self.forceSizeUpdate) {
         self.forceSizeUpdate = NO;
-		if (newHeight <= self.maximumHeight) {
-			if(self.animateHeightChange) {
-				[UIView beginAnimations:@"" context:nil];
-				[UIView setAnimationDelegate:self];
-				[UIView setAnimationDidStopSelector:@selector(growDidStop)];
-				[UIView setAnimationBeginsFromCurrentState:YES];
-			}
-			
+        if (newHeight <= self.maximumHeight) {
+            if(self.animateHeightChange) {
+                [UIView beginAnimations:@"" context:nil];
+                [UIView setAnimationDelegate:self];
+                [UIView setAnimationDidStopSelector:@selector(growDidStop)];
+                [UIView setAnimationBeginsFromCurrentState:YES];
+            }
+            
             //fix for iOS7
             newHeight++;
             
-			if ([self.delegate respondsToSelector:@selector(expandingTextView:willChangeHeight:)]) {
+            if ([self.delegate respondsToSelector:@selector(expandingTextView:willChangeHeight:)]) {
                 [self.delegate expandingTextView:self willChangeHeight:(newHeight)];
-			}
+            }
             
             if (newHeight >= self.maximumHeight) {
                 /* Enable vertical scrolling */
@@ -321,24 +325,24 @@
                 /* Disable vertical scrolling */
                 self.internalTextView.scrollEnabled = NO;
             }
-			
-			// Resize the frame
-			CGRect r = self.frame;
-			r.size.height = newHeight;
-			self.frame = r;
             
-			if(self.animateHeightChange) {
-				[UIView commitAnimations];
-			}
+            // Resize the frame
+            CGRect r = self.frame;
+            r.size.height = newHeight;
+            self.frame = r;
+            
+            if(self.animateHeightChange) {
+                [UIView commitAnimations];
+            }
             else if ([self.delegate respondsToSelector:@selector(expandingTextView:didChangeHeight:)]) {
                 [self.delegate expandingTextView:self didChangeHeight:(newHeight)];
             }
-		}
-	}
-	
-	if ([self.delegate respondsToSelector:@selector(expandingTextViewDidChange:)]) {
-		[self.delegate expandingTextViewDidChange:self];
-	}
+        }
+    }
+    
+    if ([self.delegate respondsToSelector:@selector(expandingTextViewDidChange:)]) {
+        [self.delegate expandingTextViewDidChange:self];
+    }
     
     //Scroll to bottom on iOS7
     if (!self.isOnPreIOS7 && self.internalTextView.text.length && textHeight > self.maximumHeight) {
@@ -349,10 +353,10 @@
 
 -(void)growDidStop
 {
-	if ([self.delegate respondsToSelector:@selector(expandingTextView:didChangeHeight:)]) 
+    if ([self.delegate respondsToSelector:@selector(expandingTextView:didChangeHeight:)]) 
     {
-		[self.delegate expandingTextView:self didChangeHeight:self.frame.size.height];
-	}
+        [self.delegate expandingTextView:self didChangeHeight:self.frame.size.height];
+    }
 }
 
 - (void) reloadInputViews {
@@ -373,104 +377,104 @@
 
 -(BOOL)resignFirstResponder
 {
-	[super resignFirstResponder];
-	return [self.internalTextView resignFirstResponder];
+    [super resignFirstResponder];
+    return [self.internalTextView resignFirstResponder];
 }
 
 #pragma mark UITextView properties
 
 -(void)setText:(NSString *)atext
 {
-	self.internalTextView.text = atext;
+    self.internalTextView.text = atext;
     [self performSelector:@selector(textViewDidChange:) withObject:self.internalTextView];
 }
 
 -(NSString*)text
 {
-	return self.internalTextView.text;
+    return self.internalTextView.text;
 }
 
 -(void)setFont:(UIFont *)afont
 {
-	self.internalTextView.font = afont;
+    self.internalTextView.font = afont;
     self.placeholderLabel.font = afont;
     [self setMaximumNumberOfLines:self.maximumNumberOfLines];
-	[self setMinimumNumberOfLines:self.minimumNumberOfLines];
+    [self setMinimumNumberOfLines:self.minimumNumberOfLines];
 }
 
 -(UIFont *)font
 {
-	return self.internalTextView.font;
-}	
+    return self.internalTextView.font;
+}   
 
 -(void)setTextColor:(UIColor *)color
 {
-	self.internalTextView.textColor = color;
+    self.internalTextView.textColor = color;
 }
 
 -(UIColor*)textColor
 {
-	return self.internalTextView.textColor;
+    return self.internalTextView.textColor;
 }
 
 -(void)setTextAlignment:(VKTextAlignment)aligment
 {
-	self.internalTextView.textAlignment = aligment;
+    self.internalTextView.textAlignment = aligment;
 }
 
 -(VKTextAlignment)textAlignment
 {
-	return self.internalTextView.textAlignment;
+    return self.internalTextView.textAlignment;
 }
 
 -(void)setSelectedRange:(NSRange)range
 {
-	self.internalTextView.selectedRange = range;
+    self.internalTextView.selectedRange = range;
 }
 
 -(NSRange)selectedRange
 {
-	return self.internalTextView.selectedRange;
+    return self.internalTextView.selectedRange;
 }
 
 -(void)setEditable:(BOOL)beditable
 {
-	self.internalTextView.editable = beditable;
+    self.internalTextView.editable = beditable;
 }
 
 -(BOOL)isEditable
 {
-	return self.internalTextView.editable;
+    return self.internalTextView.editable;
 }
 
 -(void)setReturnKeyType:(UIReturnKeyType)keyType
 {
-	self.internalTextView.returnKeyType = keyType;
+    self.internalTextView.returnKeyType = keyType;
 }
 
 -(UIReturnKeyType)returnKeyType
 {
-	return self.internalTextView.returnKeyType;
+    return self.internalTextView.returnKeyType;
 }
 
 -(void)setDataDetectorTypes:(UIDataDetectorTypes)datadetector
 {
-	self.internalTextView.dataDetectorTypes = datadetector;
+    self.internalTextView.dataDetectorTypes = datadetector;
 }
 
 -(UIDataDetectorTypes)dataDetectorTypes
 {
-	return self.internalTextView.dataDetectorTypes;
+    return self.internalTextView.dataDetectorTypes;
 }
 
 - (BOOL)hasText
 {
-	return [self.internalTextView.text length];
+    return [self.internalTextView.text length];
 }
 
 - (void)scrollRangeToVisible:(NSRange)range
 {
-	[self.internalTextView scrollRangeToVisible:range];
+    [self.internalTextView scrollRangeToVisible:range];
 }
 
 #pragma mark -
@@ -478,75 +482,91 @@
 
 - (BOOL)textViewShouldBeginEditing:(UITextView *)textView 
 {
-	if ([self.delegate respondsToSelector:@selector(expandingTextViewShouldBeginEditing:)]) 
+    if ([self.delegate respondsToSelector:@selector(expandingTextViewShouldBeginEditing:)]) 
     {
-		return [self.delegate expandingTextViewShouldBeginEditing:self];
-	} 
+        return [self.delegate expandingTextViewShouldBeginEditing:self];
+    } 
     else 
     {
-		return YES;
-	}
+        return YES;
+    }
 }
 
 - (BOOL)textViewShouldEndEditing:(UITextView *)textView 
 {
-	if ([self.delegate respondsToSelector:@selector(expandingTextViewShouldEndEditing:)]) 
+    if ([self.delegate respondsToSelector:@selector(expandingTextViewShouldEndEditing:)]) 
     {
-		return [self.delegate expandingTextViewShouldEndEditing:self];
-	} 
+        return [self.delegate expandingTextViewShouldEndEditing:self];
+    } 
     else 
     {
-		return YES;
-	}
+        return YES;
+    }
 }
 
 - (void)textViewDidBeginEditing:(UITextView *)textView 
 {
-	if ([self.delegate respondsToSelector:@selector(expandingTextViewDidBeginEditing:)]) 
+    if ([self.delegate respondsToSelector:@selector(expandingTextViewDidBeginEditing:)]) 
     {
-		[self.delegate expandingTextViewDidBeginEditing:self];
-	}
+        [self.delegate expandingTextViewDidBeginEditing:self];
+    }
 }
 
 - (void)textViewDidEndEditing:(UITextView *)textView 
-{		
-	if ([self.delegate respondsToSelector:@selector(expandingTextViewDidEndEditing:)]) 
+{       
+    if ([self.delegate respondsToSelector:@selector(expandingTextViewDidEndEditing:)]) 
     {
-		[self.delegate expandingTextViewDidEndEditing:self];
-	}
+        [self.delegate expandingTextViewDidEndEditing:self];
+    }
 }
 
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)atext 
 {
-	if(![textView hasText] && [atext isEqualToString:@""]) 
+    int maxInputLength = _maximumTextCount;
+    
+    NSMutableString *str = [textView.text mutableCopy];
+    
+    [str replaceCharactersInRange:range withString:atext];
+    
+    if ([str length] > maxInputLength) {
+        
+        return NO;
+    }
+    
+    if ([self.delegate respondsToSelector:@selector(expandingTextView:shouldChangeTextInRange:replacementText:)])
+    {
+        [self.delegate expandingTextView:self shouldChangeTextInRange:range replacementText:atext];
+    }
+    
+    if(![textView hasText] && [atext isEqualToString:@""]) 
     {
         return NO;
-	}
+    }
     
-	if ([atext isEqualToString:@"\n"]) 
+    if ([atext isEqualToString:@"\n"]) 
     {
-		if ([self.delegate respondsToSelector:@selector(expandingTextViewShouldReturn:)]) 
+        if ([self.delegate respondsToSelector:@selector(expandingTextViewShouldReturn:)]) 
         {
-			if (![self.delegate performSelector:@selector(expandingTextViewShouldReturn:) withObject:self]) 
+            if (![self.delegate performSelector:@selector(expandingTextViewShouldReturn:) withObject:self]) 
             {
-				return YES;
-			} 
+                return YES;
+            } 
             else 
             {
-				[textView resignFirstResponder];
-				return NO;
-			}
-		}
-	}
-	return YES;
+                [textView resignFirstResponder];
+                return NO;
+            }
+        }
+    }
+    return YES;
 }
 
 - (void)textViewDidChangeSelection:(UITextView *)textView 
 {
-	if ([self.delegate respondsToSelector:@selector(expandingTextViewDidChangeSelection:)]) 
+    if ([self.delegate respondsToSelector:@selector(expandingTextViewDidChangeSelection:)]) 
     {
-		[self.delegate expandingTextViewDidChangeSelection:self];
-	}
+        [self.delegate expandingTextViewDidChangeSelection:self];
+    }
 }
 
 @end

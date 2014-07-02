@@ -77,6 +77,7 @@
 @property NSInteger minimumNumberOfLines;
 @property CGFloat minimumHeight;
 @property CGFloat maximumHeight;
+@property NSInteger maximumTextCount;
 @property BOOL animateHeightChange;
 @property BOOL forceSizeUpdate;
 @property (readwrite, nonatomic) UIView *inputView;
